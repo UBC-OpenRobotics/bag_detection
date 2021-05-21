@@ -17,3 +17,9 @@ The default output is the bounding box and label for each input image.
 ```
 ../bag_detection_bak/test/bags_1.jpg: Label: bag	Bbox: (23,-40,392,563)
 ```
+
+## Issues
+Training was done  in the darknet framework, using the MS COCO dataset, with the three bag classes. As the training chart shows, the best mAP achieved is only 32% which is why the accuracy isn't great
+![alt text](https://github.com/UBC-OpenRobotics/bag_detection/blob/main/output/chart_yolov4-tiny-bags.png "tiny YOLOv4 Training chart")
+
+The solution is to filter some extreme training examples from the dataset and supplement it with more normal scenario data.
