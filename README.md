@@ -2,6 +2,9 @@
 
 This repository implements a script that executes bag detection based on a trained tiny YOLOv4 model.
 
+![alt text](https://github.com/UBC-OpenRobotics/bag_detection/blob/main/output/bag_detection_sample.gif "Example of Bag Detection")
+
+
 ## Usage
 To run inference,
 ```
