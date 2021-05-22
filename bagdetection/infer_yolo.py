@@ -1,19 +1,24 @@
 #/usr/bin/python
 
 import os
+import sys
+sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import cv2
+sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import numpy as np
 import argparse as ap
+from pathlib import Path
 
 class Model():
 
     def __init__(self):
 
         #Define Paths to YOLOv4 tiny weights and cfg files
-        self.weights_path = './model_data/yolov4-tiny-bags_best.weights' 
-        self.config_path = './model_data/yolov4-tiny-bags.cfg'
-        self.labels_path = './model_data/bags.names'
-
+        # FIXME: use importlib here to import files
+        self.weights_path = (Path(__file__).parent / 'model_data/yolov4-tiny-bags_best.weights').absolute()
+        self.config_path = (Path(__file__).parent / 'model_data/yolov4-tiny-bags.cfg').absolute()
+        self.labels_path = (Path(__file__).parent / 'model_data/bags.names').absolute()
+    
         #Visual settings
         self.color = (0,255,0)
 
@@ -68,6 +73,7 @@ class Model():
         #non-maxima suppression
         idxs = cv2.dnn.NMSBoxes(boxes, confidences, threshold, 0.1)
         
+        lbl, bbox = None, None
         if len(idxs) > 0:
             for i in idxs.flatten():
                 (x, y) = (boxes[i][0], boxes[i][1])
