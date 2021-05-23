@@ -129,8 +129,6 @@ if __name__ == '__main__':
 
     #Load model
     model = Model()
-
-
     if video:
         cap = cv2.VideoCapture(0)
         start = time.time()
@@ -157,6 +155,6 @@ if __name__ == '__main__':
                 show_img = model.draw_bbox(image, lbl, bbox)
                 cv2.imshow('Results', show_img)
                 cv2.waitKey(-1)
-
+    
     if args.show:
         cv2.destroyAllWindows()
