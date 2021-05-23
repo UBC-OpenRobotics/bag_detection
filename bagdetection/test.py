@@ -10,7 +10,10 @@ cap = cv2.VideoCapture(0)
 start = time.time()
 while True:
     _, frame = cap.read()
-    model.infer(frame)
+    res = model.infer(frame)
+    
+
+    print(res)
     print(time.time()- start)
     start = time.time()
 

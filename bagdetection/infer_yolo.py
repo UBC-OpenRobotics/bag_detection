@@ -1,6 +1,7 @@
 #/usr/bin/python
 
 import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 import sys
 sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import cv2
@@ -8,16 +9,22 @@ sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import numpy as np
 import argparse as ap
 from pathlib import Path
+import time
 
 class Model():
 
-    def __init__(self):
+    def __init__(self, model_dir=None):
 
         #Define Paths to YOLOv4 tiny weights and cfg files
         # FIXME: use importlib here to import files
-        self.weights_path = (Path(__file__).parent / 'model_data/yolov4-tiny-bags_best.weights').absolute()
-        self.config_path = (Path(__file__).parent / 'model_data/yolov4-tiny-bags.cfg').absolute()
-        self.labels_path = (Path(__file__).parent / 'model_data/bags.names').absolute()
+        if not model_dir:
+            self.weights_path = str(Path(__file__).parent / 'model_data/yolov4-tiny-bags_best.weights')
+            self.config_path = str(Path(__file__).parent / 'model_data/yolov4-tiny-bags.cfg')
+            self.labels_path = str(Path(__file__).parent / 'model_data/bags.names')
+        else:
+            self.weights_path = str(Path(model_dir) / 'yolov4-tiny-bags_best.weights')
+            self.config_path = str(Path(model_dir) / 'yolov4-tiny-bags.cfg')
+            self.labels_path = str(Path(model_dir) / 'bags.names')
     
         #Visual settings
         self.color = (0,255,0)
@@ -81,6 +88,8 @@ class Model():
                 
                 lbl = self.labels[classIDs[i]]
                 bbox = [x,y,w,h]
+                
+            bbox = bbox[0] / 640, bbox[1] / 480, bbox[2] / 640, bbox[3] /480
 
         return lbl, bbox
     
@@ -106,10 +115,13 @@ if __name__ == '__main__':
 
     #Process image path or directory
     input_path = args.input
+    video = False
     if os.path.isdir(input_path):
         img_paths = [os.path.join(input_path, filename) for filename in os.listdir(input_path)]
     elif os.path.isfile(input_path):
         img_paths = [input_path]
+    elif input_path.isnumeric():
+        video = True
     else:
         print('[ERROR] %s is not a directory or file' % input_path)
         exit()
@@ -119,20 +131,32 @@ if __name__ == '__main__':
     model = Model()
 
 
+    if video:
+        cap = cv2.VideoCapture(0)
+        start = time.time()
+        while True:
+            _, frame = cap.read()
+            lbl, bbox = model.infer(frame)
+            if lbl:
+                frame = model.draw_bbox(frame, lbl, bbox)
+            cv2.imshow('Results', frame)    
+            cv2.waitKey(1)
+            print(time.time()- start)
+            start = time.time()
+    else:
+        for img_path in img_paths:
+            #load image
+            image = cv2.imread(img_path)
 
-    for img_path in img_paths:
-        #load image
-        image = cv2.imread(img_path)
+            #run inference
+            lbl, bbox = model.infer(image)
 
-        #run inference
-        lbl, bbox = model.infer(image)
+            print('%s: Label: %s\tBbox: (%i,%i,%i,%i)' % (img_path, lbl, bbox[0],bbox[1],bbox[2],bbox[3]))
 
-        print('%s: Label: %s\tBbox: (%i,%i,%i,%i)' % (img_path, lbl, bbox[0],bbox[1],bbox[2],bbox[3]))
-
-        if args.show:
-            show_img = model.draw_bbox(image, lbl, bbox)
-            cv2.imshow('Results', show_img)
-            cv2.waitKey(-1)
+            if args.show:
+                show_img = model.draw_bbox(image, lbl, bbox)
+                cv2.imshow('Results', show_img)
+                cv2.waitKey(-1)
 
     if args.show:
         cv2.destroyAllWindows()
