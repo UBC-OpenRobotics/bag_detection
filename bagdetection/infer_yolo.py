@@ -15,10 +15,11 @@ class Model():
 
         #Define Paths to YOLOv4 tiny weights and cfg files
         # FIXME: use importlib here to import files
-        self.weights_path = (Path(__file__).parent / 'model_data/yolov4-tiny-bags_best.weights').absolute()
-        self.config_path = (Path(__file__).parent / 'model_data/yolov4-tiny-bags.cfg').absolute()
-        self.labels_path = (Path(__file__).parent / 'model_data/bags.names').absolute()
-    
+        self.weights_path = str((Path(__file__).parent / 'model_data/yolov4-tiny-bags_best.weights').absolute())
+        self.config_path = str((Path(__file__).parent / 'model_data/yolov4-tiny-bags.cfg').absolute())
+        self.labels_path = str((Path(__file__).parent / 'model_data/bags.names').absolute())
+        
+        print(self.weights_path, self.config_path)
         #Visual settings
         self.color = (0,255,0)
 
@@ -118,21 +119,29 @@ if __name__ == '__main__':
     #Load model
     model = Model()
 
-
+    #Build return array in format [{"name":class, "bbox":[x,y,w,h]}]
+    ret_arr = []
 
     for img_path in img_paths:
         #load image
         image = cv2.imread(img_path)
+        (H,W) = image.shape[:2]
 
         #run inference
         lbl, bbox = model.infer(image)
 
+        x_norm, y_norm, w_norm, h_norm = bbox / np.array([W, H, W, H])
+
         print('%s: Label: %s\tBbox: (%i,%i,%i,%i)' % (img_path, lbl, bbox[0],bbox[1],bbox[2],bbox[3]))
+
+        ret_arr.append({"name":lbl, "bbox": [x_norm, y_norm, w_norm, h_norm]})
 
         if args.show:
             show_img = model.draw_bbox(image, lbl, bbox)
             cv2.imshow('Results', show_img)
             cv2.waitKey(-1)
 
+    print(ret_arr)
+    
     if args.show:
         cv2.destroyAllWindows()
